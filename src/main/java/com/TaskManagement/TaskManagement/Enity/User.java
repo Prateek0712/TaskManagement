@@ -22,10 +22,14 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long  userId;
+    private Long  Id;
+
+    @Column(unique = true)
     private String userName;
     private String password;
 
+    @Column(unique = true)
+    private String email;
     @Enumerated(value=EnumType.STRING)
     private Roles rol;
 
