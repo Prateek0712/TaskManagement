@@ -45,6 +45,7 @@ public class TaskService {
         addTaskResp.setDueDate(task.getDueDate());
         addTaskResp.setUserMail(user.getEmail());
         addTaskResp.setUserName(user.getUserName());
+        System.out.println(user.getTaskList().size());
         return addTaskResp;
     }
     public List<getTaskForUserResp> getAllTaskForUser(String email) throws Exception
@@ -57,6 +58,7 @@ public class TaskService {
         User user =optionalUser.get();
         List<Task> taskList=user.getTaskList();
         List<getTaskForUserResp> taskAndDueDatesList=new ArrayList<>();
+        System.out.println(taskAndDueDatesList.size()+" size");
         for(Task t:taskList)
         {
             getTaskForUserResp g=new getTaskForUserResp();
@@ -81,7 +83,7 @@ public class TaskService {
             throw new TaskNotFoundException("GIVEN TASK DOES NOT EXIST");
         }
         Task task=optionalTask.get();
-        if(updatedTask.getTitle()!=null)
+        if(updatedTask.getTitle().length()!=0)
         {
             task.setTitle(updatedTask.getTitle());
         }
@@ -104,5 +106,16 @@ public class TaskService {
         t.setUserMail(optionalUser.get().getEmail());
         t.setStatus(task.getStatus());
         return t;
+    }
+
+    public String deleteTaskById(String taskId) throws Exception
+    {
+        Optional<Task> optionalTask=taskRepo.findById(taskId);
+        if(optionalTask.isEmpty())
+        {
+            throw new TaskNotFoundException("Task With Given ID not found");
+        }
+        taskRepo.deleteById(taskId);
+        return "Task with ID: "+taskId+" is deleted successfully";
     }
 }
