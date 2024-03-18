@@ -1,11 +1,11 @@
 package com.TaskManagement.TaskManagement.Controller;
 
+import com.TaskManagement.TaskManagement.Enums.Status;
 import com.TaskManagement.TaskManagement.Exceptions.UserNotFoundException;
 import com.TaskManagement.TaskManagement.RequestDto.addTaskRqst;
-import com.TaskManagement.TaskManagement.RequestDto.addUserRqst;
 import com.TaskManagement.TaskManagement.RequestDto.updateTaskRqst;
 import com.TaskManagement.TaskManagement.ResponceDto.addTaskResp;
-import com.TaskManagement.TaskManagement.ResponceDto.addUserResp;
+import com.TaskManagement.TaskManagement.ResponceDto.getAllTaskResp;
 import com.TaskManagement.TaskManagement.ResponceDto.getTaskForUserResp;
 import com.TaskManagement.TaskManagement.ResponceDto.updateTaskResp;
 import com.TaskManagement.TaskManagement.Service.TaskService;
@@ -25,19 +25,6 @@ public class UserController {
 
     @Autowired
     private TaskService taskService;
-    @PostMapping("/addUser")
-    public ResponseEntity addUser(@RequestBody addUserRqst userAddingRqst)
-    {
-        addUserResp addUserResp= null;
-        try{
-            addUserResp=userService.addUser(userAddingRqst);
-            return new ResponseEntity(addUserResp,HttpStatus.CREATED);
-        }
-        catch (Exception e)
-        {
-            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
 
     @PostMapping("/addTask")
     public ResponseEntity addTask(@RequestBody addTaskRqst taskAddingRqst)
@@ -53,10 +40,10 @@ public class UserController {
     }
 
     @GetMapping("/getAllTasksForUser/{userEmail}")
-    public ResponseEntity getAllTaskForUser(@PathVariable String userEmail )
+    public ResponseEntity getAllTaskForUser(@PathVariable String userEmail)
     {
         try{
-            List<getTaskForUserResp> taskAndDueDatesList =taskService.getAllTaskForUser(userEmail);
+            List<getAllTaskResp> taskAndDueDatesList =taskService.getAllTaskForUser(userEmail);
             if(taskAndDueDatesList.isEmpty())
             {
                 return  new ResponseEntity("No Task Yet",HttpStatus.NO_CONTENT);
@@ -92,6 +79,35 @@ public class UserController {
         try{
             String resp= taskService.deleteTaskById(taskId);
             return new ResponseEntity(resp,HttpStatus.OK);
+        }
+        catch (Exception e)
+        {
+            return new ResponseEntity(e.getMessage(),HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/sortBy/{userEmail}")
+    public ResponseEntity sortBy(@PathVariable String  userEmail,
+                                 @RequestParam("status")boolean status,
+                                 @RequestParam("date")boolean date)
+    {
+        try{
+            List<getAllTaskResp> taskList=taskService.sortBy(userEmail,status,date);
+            return new ResponseEntity(taskList,HttpStatus.OK);
+        }
+        catch (Exception e)
+        {
+            return new ResponseEntity(e.getMessage(),HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/filterBy/{userEmail}")
+    public ResponseEntity filterBy(@PathVariable String  userEmail,
+                                   @RequestParam("status")Status status)
+    {
+        try{
+            List<getAllTaskResp> taskList=taskService.filterBy(userEmail,status);
+            return new ResponseEntity(taskList,HttpStatus.OK);
         }
         catch (Exception e)
         {
