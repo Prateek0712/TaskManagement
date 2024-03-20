@@ -1,14 +1,15 @@
 package com.TaskManagement.TaskManagement.RequestDto;
 
-import com.TaskManagement.TaskManagement.Enums.Roles;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
-public class addAdminRqst {
+@Builder
+@ToString
+public class JwtRequest {
     private String email;
-    private String adminName;
     private String password;
-    private Roles rol;
 }

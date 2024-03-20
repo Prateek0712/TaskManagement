@@ -1,28 +1,29 @@
 package com.TaskManagement.TaskManagement.Service;
 
-import com.TaskManagement.TaskManagement.Enity.Admin;
+
 import com.TaskManagement.TaskManagement.Enity.Task;
 import com.TaskManagement.TaskManagement.Enity.User;
 import com.TaskManagement.TaskManagement.Enums.Status;
-import com.TaskManagement.TaskManagement.Exceptions.AdminNotExistException;
-import com.TaskManagement.TaskManagement.Exceptions.NoFilteringParameterException;
 import com.TaskManagement.TaskManagement.Exceptions.TaskNotFoundException;
 import com.TaskManagement.TaskManagement.Exceptions.UserNotFoundException;
-import com.TaskManagement.TaskManagement.Reposiotory.AdminRepo;
 import com.TaskManagement.TaskManagement.Reposiotory.TaskRepo;
 import com.TaskManagement.TaskManagement.Reposiotory.UserRepo;
 import com.TaskManagement.TaskManagement.RequestDto.addTaskRqst;
+import com.TaskManagement.TaskManagement.RequestDto.sortAndFilterRqst;
 import com.TaskManagement.TaskManagement.RequestDto.updateTaskRqst;
 import com.TaskManagement.TaskManagement.ResponceDto.addTaskResp;
 import com.TaskManagement.TaskManagement.ResponceDto.getAllTaskResp;
-import com.TaskManagement.TaskManagement.ResponceDto.getTaskForUserResp;
 import com.TaskManagement.TaskManagement.ResponceDto.updateTaskResp;
 import com.TaskManagement.TaskManagement.Transformers.TaskTranformers;
 import com.TaskManagement.TaskManagement.comparators.compareByDate;
 import com.TaskManagement.TaskManagement.comparators.compareByStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.JstlUtils;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -34,8 +35,6 @@ public class TaskService {
     @Autowired
     private TaskRepo taskRepo;
 
-    @Autowired
-    private AdminRepo adminRepo;
     public addTaskResp addTask(addTaskRqst taskAddingRqst) throws Exception
     {
         Optional<User> optionalUser= userRepo.findByEmail(taskAddingRqst.getUserMail());
@@ -58,53 +57,16 @@ public class TaskService {
         System.out.println(user.getTaskList().size());
         return addTaskResp;
     }
-    public List<getAllTaskResp> getAllTaskForUser(String email) throws Exception
-    {
-        Optional<User> optionalUser=userRepo.findByEmail(email);
-        if(optionalUser.isEmpty())
-        {
-            throw new UserNotFoundException("USER  NOT  EXIST");
-        }
-        User user =optionalUser.get();
-        List<Task> taskList=user.getTaskList();
-        List<getAllTaskResp> taskAndDueDatesList=new ArrayList<>();
-        System.out.println(taskAndDueDatesList.size()+" size");
-        for(Task t:taskList)
-        {
-            getAllTaskResp g=new getAllTaskResp();
-            g.setTitle(t.getTitle());
-            g.setDueDate(t.getDueDate());
-            g.setStatus(t.getStatus());
-            g.setTaskId(t.getTaskId());
-            g.setUserId(t.getUser().getId());
-            taskAndDueDatesList.add(g);
-        }
-        return taskAndDueDatesList;
-    }
 
     public updateTaskResp updateTask (updateTaskRqst updatedTask) throws Exception
     {
-        boolean isAdmin=false;
-        if(updatedTask.getRol().equals("ADMIN"))
-        {
-            isAdmin=true;
-        }
-        Optional<Admin>optionalAdmin=adminRepo.findByEmail(updatedTask.getEmail());
         Optional<User>optionalUser=userRepo.findByEmail(updatedTask.getEmail());
         Optional<Task>optionalTask=taskRepo.findById(updatedTask.getId()); //this is task id
-        if(isAdmin)
+        if(optionalUser.isEmpty())
         {
-            if(optionalAdmin.isEmpty())
-            {
-                throw new AdminNotExistException("ADMIN NOT FOUND");
-            }
+            throw new UserNotFoundException("USER NOT FOUND");
         }
-        else {
-            if(optionalUser.isEmpty())
-            {
-                throw new UserNotFoundException("USER NOT FOUND");
-            }
-        }
+
         if(optionalTask.isEmpty())
         {
             throw new TaskNotFoundException("GIVEN TASK DOES NOT EXIST");
@@ -146,145 +108,102 @@ public class TaskService {
         return "Task with ID: "+taskId+" is deleted successfully";
     }
 
-    public  List<getAllTaskResp> getAllTasks()
+    public  List<getAllTaskResp> getAllTasks(String email)
     {
         List<Task>taskList=taskRepo.findAll();
         List<getAllTaskResp>allTaskList=new ArrayList<>();
-        for(Task t:taskList)
+        User user= userRepo.findByEmail(email).get();
+        if((user.getRol()+"").equals("ADMIN"))
         {
-            getAllTaskResp gt=new getAllTaskResp();
-            gt.setTaskId(t.getTaskId());
-            gt.setUserId(t.getUser().getId());
-            gt.setTitle(t.getTitle());
-            gt.setDueDate(t.getDueDate());
-            gt.setStatus(t.getStatus());
-            allTaskList.add(gt);
+            for(Task t:taskList)
+            {
+                getAllTaskResp gt=new getAllTaskResp();
+                gt.setTaskId(t.getTaskId());
+                gt.setUserId(t.getUser().getId());
+                gt.setTitle(t.getTitle());
+                gt.setDueDate(t.getDueDate());
+                gt.setStatus(t.getStatus());
+                allTaskList.add(gt);
+            }
         }
+        else
+        {
+            for(Task t:taskList)
+            {
+                if(t.getUser().getId()==user.getId())
+                {
+                    getAllTaskResp gt=new getAllTaskResp();
+                    gt.setTaskId(t.getTaskId());
+                    gt.setUserId(t.getUser().getId());
+                    gt.setTitle(t.getTitle());
+                    gt.setDueDate(t.getDueDate());
+                    gt.setStatus(t.getStatus());
+                    allTaskList.add(gt);
+                }
+            }
+        }
+        System.out.println(allTaskList.size()+" -----> this is size");
         return allTaskList;
     }
 
     //sorting and  filtering for user
-    public List<getAllTaskResp> sortBy(String email,boolean status, boolean date)throws  Exception
+    public List<getAllTaskResp> sortAndFilter(sortAndFilterRqst rqst, String email)
     {
-        List<getAllTaskResp> taskList= null;
-        try{
-            taskList=getAllTaskForUser(email);
-        }
-        catch (Exception e)
+
+        List<getAllTaskResp>taskList=getAllTasks(email);
+       // sorting
+        boolean date =rqst.isSortByDate();
+        boolean statuss=rqst.isSortByStatus();
+        if(date)
         {
-            throw new Exception(e.getMessage());
-        }
-        if(status)
-        {
-            Collections.sort(taskList, new compareByStatus());
-        } else if (date) {
             Collections.sort(taskList,new compareByDate());
         }
-        return taskList;
+        else if(statuss)
+        {
+            Collections.sort(taskList,new compareByStatus());
+        }
+        if(rqst.getFilterByStasus()!=null|| rqst.getFilterByDueDate()!=null)
+        {
+            taskList=filter(taskList,rqst.getFilterByStasus(),rqst.getFilterByDueDate());
+        }
+        return new ArrayList<>(taskList);
+
     }
-
-    public List<getAllTaskResp> filterBy(String email, Status status)throws  Exception
+    public List<getAllTaskResp> filter(List<getAllTaskResp>taskList,Status  status,LocalDate dueDate)
     {
-        List<Task> taskList= taskRepo.findByUser_EmailAndStatus(email, status);
-        List<getAllTaskResp>allTaskList=new ArrayList<>();
-        for(Task t:taskList)
+        List<getAllTaskResp>filteredList=new ArrayList<>();
+        if(status!=null && dueDate==null)
         {
-            getAllTaskResp gt=new getAllTaskResp();
-            gt.setTaskId(t.getTaskId());
-            gt.setUserId(t.getUser().getId());
-            gt.setTitle(t.getTitle());
-            gt.setDueDate(t.getDueDate());
-            gt.setStatus(t.getStatus());
-            allTaskList.add(gt);
-        }
-        return allTaskList;
-   }
-
-   //sorting  and filtering  for admin
-    public List<getAllTaskResp> sortBy(boolean status, boolean date,boolean userId)
-    {
-        List<getAllTaskResp> taskList=getAllTasks();
-        if(status)
-        {
-            Collections.sort(taskList, new compareByStatus());
-        } else if (date) {
-            Collections.sort(taskList,new compareByDate());
-        }
-        else if(userId)
-        {
-            Collections.sort(taskList,(a,b)-> {
-                if(a.getUserId()<b.getUserId())
-                {
-                    return -1;
-                }
-                else if(a.getUserId()>b.getUserId())
-                {
-                    return 1;
-                }
-                else{
-                    return 0;
-                }
-            });
-        }
-        return taskList;
-    }
-
-    public List<getAllTaskResp> filterBy( Status status, LocalDate dueDate) throws Exception
-    {
-        List<getAllTaskResp>allTask=null;
-        if(status!=null && dueDate!=null)
-        {
-            List<Task>taskList=taskRepo.findByStatusAndDueDate(status,dueDate);
-            for(Task t:taskList)
+            for(getAllTaskResp gt:taskList)
             {
-                getAllTaskResp gt=new getAllTaskResp();
-                gt.setTaskId(t.getTaskId());
-                gt.setUserId(t.getUser().getId());
-                gt.setTitle(t.getTitle());
-                gt.setDueDate(t.getDueDate());
-                gt.setStatus(t.getStatus());
-                allTask.add(gt);
+                if(status.equals(gt.getStatus()))
+                {
+                    filteredList.add(gt);
+                }
             }
-            return allTask;
-        }
-        else if(status!=null && dueDate==null) {
-            List<Task>taskList=taskRepo.findByStatus(status);
-            for(Task t:taskList)
-            {
-                getAllTaskResp gt=new getAllTaskResp();
-                gt.setTaskId(t.getTaskId());
-                gt.setUserId(t.getUser().getId());
-                gt.setTitle(t.getTitle());
-                gt.setDueDate(t.getDueDate());
-                gt.setStatus(t.getStatus());
-                allTask.add(gt);
-            }
-            return allTask;
         }
         else if(status==null && dueDate!=null)
         {
-            List<Task>taskList=taskRepo.findByDue(dueDate);
-            for(Task t:taskList)
+            for(getAllTaskResp gt:taskList)
             {
-                getAllTaskResp gt=new getAllTaskResp();
-                gt.setTaskId(t.getTaskId());
-                gt.setUserId(t.getUser().getId());
-                gt.setTitle(t.getTitle());
-                gt.setDueDate(t.getDueDate());
-                gt.setStatus(t.getStatus());
-                allTask.add(gt);
+                if(dueDate.equals(gt.getDueDate()))
+                {
+                    filteredList.add(gt);
+                }
             }
-            return allTask;
         }
-        else{
-            throw new NoFilteringParameterException("Please Select Filtering Parameter");
+        else if(status!=null && dueDate!=null)
+        {
+            for(getAllTaskResp gt:taskList)
+            {
+                if(dueDate.equals(gt.getDueDate()) && status.equals(gt.getStatus()))
+                {
+                    filteredList.add(gt);
+                }
+            }
         }
+        return new ArrayList<>(filteredList);
     }
-
-
-
-
-
 }
 
 

@@ -16,9 +16,7 @@ import java.util.List;
 @Builder
 
 
-/*
-  THIS INCLUDE ADMIN AS WELL AS NORMAL USER  ONLY WE ASSIGN  ROLES ADMIN OR USER TO THEM VIA ENUM
- */
+
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
