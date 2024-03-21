@@ -10,5 +10,4 @@ public class TaskManagementApplication {
 		SpringApplication.run(TaskManagementApplication.class, args);
 	}
 }
-//change swagger dependency
-//add security  layer means based authentication
+

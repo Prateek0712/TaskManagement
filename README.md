@@ -3,10 +3,15 @@
 
 The Task Management API developed using Spring Boot offers a robust and efficient solution for organizing, tracking, and managing tasks within an application ecosystem. Leveraging the power of Spring Boot's lightweight and flexible framework. From task creation and assignment to tracking progress and status updates, the API offers comprehensive functionalities to streamline task management workflows.
 
-
+## Tech Stack :
+1. Core Java
+2. Spring Boot
+3. MySql
+4. Postman
+5. Swagger
 ## Installation
 
-To deploy this project run
+Follow process given below to run project
 
 ```bash
   - Clone this repository to your local stytem.
@@ -87,7 +92,7 @@ To deploy this project run
 6. **Update Task Or Status**
    - Path: `http://localhost:8080/user/updateTaskOrStatus`
    - Method: PUT
-   - Body {            
+   - Request Body {            
            "taskId":"UUID",
            "title":"t1",
            "Description" : "v",
