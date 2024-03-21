@@ -25,15 +25,15 @@ Follow process given below to run project
 
 ## Archietectural View
 
-![App Screenshot](task_management_Archietecture.png)
+![App Screenshot](z2.png)
 
 ## Database View
 
-![App Screenshot](Task_management_dbDesign.drawio.png)
+![App Screenshot](z3.png)
 
 ## Here are the supported API's that  you can run by using postman or swagger
 
-![App Screenshot](swagger_ss.jpg)
+![App Screenshot](z1.jpg)
 
 
 
