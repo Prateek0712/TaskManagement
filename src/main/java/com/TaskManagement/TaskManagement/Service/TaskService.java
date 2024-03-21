@@ -3,6 +3,7 @@ package com.TaskManagement.TaskManagement.Service;
 
 import com.TaskManagement.TaskManagement.Enity.Task;
 import com.TaskManagement.TaskManagement.Enity.User;
+import com.TaskManagement.TaskManagement.Enums.Roles;
 import com.TaskManagement.TaskManagement.Enums.Status;
 import com.TaskManagement.TaskManagement.Exceptions.TaskNotFoundException;
 import com.TaskManagement.TaskManagement.Exceptions.UserNotFoundException;
@@ -17,6 +18,7 @@ import com.TaskManagement.TaskManagement.ResponceDto.updateTaskResp;
 import com.TaskManagement.TaskManagement.Transformers.TaskTranformers;
 import com.TaskManagement.TaskManagement.comparators.compareByDate;
 import com.TaskManagement.TaskManagement.comparators.compareByStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,8 +37,14 @@ public class TaskService {
     @Autowired
     private TaskRepo taskRepo;
 
-    public addTaskResp addTask(addTaskRqst taskAddingRqst) throws Exception
+    public addTaskResp addTask(addTaskRqst taskAddingRqst, String loggedInmail) throws Exception
     {
+        User loggedInUser=userRepo.findByEmail(loggedInmail).get();
+        if((loggedInUser.getRol().equals(Roles.ADMIN))==false
+                && loggedInmail.equals(taskAddingRqst.getUserMail())==false)
+        {
+            throw new Exception("ACCESS DENIED");
+        }
         Optional<User> optionalUser= userRepo.findByEmail(taskAddingRqst.getUserMail());
         if(optionalUser.isEmpty())
         {
@@ -58,15 +66,16 @@ public class TaskService {
         return addTaskResp;
     }
 
-    public updateTaskResp updateTask (updateTaskRqst updatedTask) throws Exception
+    public updateTaskResp updateTask (updateTaskRqst updatedTask,String loggedInmail) throws Exception
     {
+        User loggedInUser=userRepo.findByEmail(loggedInmail).get();
+        if((loggedInUser.getRol().equals(Roles.ADMIN))==false
+                && loggedInmail.equals(updatedTask.getEmail())==false)
+        {
+            throw new Exception("ACCESS DENIED");
+        }
         Optional<User>optionalUser=userRepo.findByEmail(updatedTask.getEmail());
         Optional<Task>optionalTask=taskRepo.findById(updatedTask.getId()); //this is task id
-        if(optionalUser.isEmpty())
-        {
-            throw new UserNotFoundException("USER NOT FOUND");
-        }
-
         if(optionalTask.isEmpty())
         {
             throw new TaskNotFoundException("GIVEN TASK DOES NOT EXIST");

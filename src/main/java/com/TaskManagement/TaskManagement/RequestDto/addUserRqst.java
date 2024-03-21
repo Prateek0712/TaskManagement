@@ -10,5 +10,4 @@ public class addUserRqst {
     private String email;
     private String userName;
     private String password;
-    private Roles rol;
 }

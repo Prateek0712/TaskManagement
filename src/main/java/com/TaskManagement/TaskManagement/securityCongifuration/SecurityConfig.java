@@ -43,11 +43,11 @@ public class SecurityConfig {
     }
 
     // Configuring HttpSecurity
-    @Bean
+  @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/home/**","/auth/**").permitAll()
+                .requestMatchers("/home/**","/auth/**","/swagger-ui/**").permitAll()
                 .and()
                 .authorizeHttpRequests().requestMatchers("/user/**").authenticated()
                 .and()

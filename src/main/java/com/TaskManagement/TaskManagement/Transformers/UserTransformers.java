@@ -12,7 +12,6 @@ public class UserTransformers {
                 .userName(userAddingRqst.getUserName())
                 .email(userAddingRqst.getEmail())
                 .password(userAddingRqst.getPassword())
-                .rol(userAddingRqst.getRol())
                 .build();
         return user;
     }

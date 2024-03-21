@@ -36,10 +36,12 @@ public class UserController {
     private TaskService taskService;
 
     @PostMapping("/addTask")
-    public ResponseEntity addTask(@RequestBody addTaskRqst taskAddingRqst)
+    public ResponseEntity addTask(@RequestBody addTaskRqst taskAddingRqst,HttpServletRequest request)
     {
         try{
-            addTaskResp addTaskResp= taskService.addTask(taskAddingRqst);
+            String jwtToken = JwtTokenExtractor.extractToken(request);
+            String email=jwtService.extractUsername(jwtToken);
+            addTaskResp addTaskResp= taskService.addTask(taskAddingRqst,email);
             return new ResponseEntity(addTaskResp,HttpStatus.CREATED);
         }
         catch (Exception e)
@@ -81,10 +83,12 @@ public class UserController {
 
     }
     @PutMapping("/updateTaskOrStatus")
-    public ResponseEntity updateTaskOrStatus(@RequestBody updateTaskRqst updatedTask)
+    public ResponseEntity updateTaskOrStatus(@RequestBody updateTaskRqst updatedTask,HttpServletRequest request)
     {
         try{
-            updateTaskResp task= taskService.updateTask(updatedTask);
+            String jwtToken = JwtTokenExtractor.extractToken(request);
+            String email=jwtService.extractUsername(jwtToken);
+            updateTaskResp task=taskService.updateTask(updatedTask,email);
             return new ResponseEntity(task,HttpStatus.OK);
         }
         catch (Exception e)
@@ -115,7 +119,6 @@ public class UserController {
         {
             return jwtService.extractUsername(jwtToken)+" ----> this is username";
         }
-        System.out.println("this is null");
         return null;
     }
 }
